@@ -3,3 +3,4 @@
 target/
 jmh-ant-sample/build/
 jmh-ant-sample/dist/
+*.log

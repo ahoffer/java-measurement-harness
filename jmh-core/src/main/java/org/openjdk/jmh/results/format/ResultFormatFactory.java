@@ -24,11 +24,11 @@
  */
 package org.openjdk.jmh.results.format;
 
-import org.openjdk.jmh.results.RunResult;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
+
+import org.openjdk.jmh.results.RunResult;
 
 public class ResultFormatFactory {
 
@@ -62,29 +62,31 @@ public class ResultFormatFactory {
      * It is a user responsibility to initialize and finish the out as appropriate.
      *
      * @param type result format type
-     * @param out target out
+     * @param out  target out
      * @return result format.
      */
     public static ResultFormat getInstance(ResultFormatType type, PrintStream out) {
         switch (type) {
-            case TEXT:
-                return new TextResultFormat(out);
-            case CSV:
-                return new XSVResultFormat(out, ",");
-            case SCSV:
+        case TEXT:
+            return new TextResultFormat(out);
+        case CSV:
+            return new XSVResultFormat(out, ",");
+        case SCSV:
                 /*
                  *    Since some implementations, notably Excel, think it is a good
                  *    idea to hijack the CSV standard, and use semi-colon instead of
                  *    comma in some locales, this is the specialised
                  *     Semi-Colon Separated Values formatter.
                  */
-                return new XSVResultFormat(out, ";");
-            case JSON:
-                return new JSONResultFormat(out);
-            case LATEX:
-                return new LaTeXResultFormat(out);
-            default:
-                throw new IllegalStateException("Unsupported result format: " + type);
+            return new XSVResultFormat(out, ";");
+        case JSON:
+            return new JSONResultFormat(out);
+        case LATEX:
+            return new LaTeXResultFormat(out);
+        case NORM:
+            return new NormalizedFormat(out);
+        default:
+            throw new IllegalStateException("Unsupported result format: " + type);
         }
     }
 
