@@ -34,13 +34,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.results.AggregationPolicy;
 import org.openjdk.jmh.results.Result;
+import org.openjdk.jmh.results.ResultRole;
 import org.openjdk.jmh.results.RunResult;
 
 public class NormalizedFormat implements ResultFormat {
@@ -57,120 +56,84 @@ public class NormalizedFormat implements ResultFormat {
 
     @Override
     public void writeOut(Collection<RunResult> results) {
-
-        List<String> names = results.stream()
-                .map(x -> x.getPrimaryResult()
-                        .getLabel())
-                .collect(Collectors.toList());
-
-        List<Result> primaryResults = results.stream()
-                .map(x -> x.getPrimaryResult())
-                .collect(Collectors.toList());
-
-        List<Long> sampleCounts = results.stream()
-                .map(x -> x.getPrimaryResult()
-                        .getSampleCount())
-                .collect(Collectors.toList());
-
-        List<Double> scores = results.stream()
-                .map(x -> x.getPrimaryResult()
-                        .getScore())
-                .collect(Collectors.toList());
-
-        List<Double> errors = results.stream()
-                .map(x -> x.getPrimaryResult()
-                        .getScoreError())
-                .collect(Collectors.toList());
-
-        List<String> units = results.stream()
-                .map(x -> x.getPrimaryResult()
-                        .getScoreUnit())
-                .collect(Collectors.toList());
-
         Set<String> parameterNames = getParameterNames(results);
-        List<List<String>> parameterValues = parameterNames.stream()
-                .map(pName -> results.stream()
-                        .map(runResult -> runResult.getParams()
-                                .getParam(pName))
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
-
-        List<Map<String, Result>> secondaries = results.stream()
-                .map(x -> x.getSecondaryResults())
-                .collect(Collectors.toList());
-
-        List<Result> secondaryResults = results.stream()
-                .map(x -> x.getSecondaryResults()
-                        .entrySet())
-                .flatMap(s -> s.stream())
-                .collect(Collectors.mapping(m -> m.getValue(), Collectors.toList()));
-
-        Set<String> secondaryResultNames = secondaryResults.stream()
-                .collect(Collectors.mapping(Result::getLabel,
-                        Collectors.toCollection(TreeSet::new)));
-
-        List<Result> aggregatesResults = Stream.concat(primaryResults.stream(),
-                secondaryResults.stream())
-                .collect(Collectors.toList());
-
-        List<BenchmarkParams> benchmarkParameters = results.stream()
-                .map(x -> x.getParams())
-                .collect(Collectors.toList());
 
         List<List<String>> table = new ArrayList<>();
-        int primaryResultsIdx = 0;
-        for (int resultIdx = 0; resultIdx < aggregatesResults.size(); ++resultIdx) {
-            Result result = aggregatesResults.get(resultIdx);
-            //            for (int paramIdx = 0; paramIdx < parameterNames.size(); ++paramIdx) {
-            List<String> row = new ArrayList<>();
+        for (RunResult run : results) {
 
-            // Map Result index to Run Result index
-            int rrIdx = resultIdx % results.size();
+            List<Result> actualResults = new ArrayList<>();
+            actualResults.add(run.getPrimaryResult());
+            actualResults.addAll(run.getSecondaryResults()
+                    .entrySet()
+                    .stream()
+                    .map(Map.Entry::getValue)
+                    .collect(Collectors.toList()));
 
-            // Test Name
-            row.add(names.get(rrIdx));
+            for (Result actualResult : actualResults) {
+                List<String> row = new ArrayList<>();
 
-            // Parameter Values
-            for (List<String> v : parameterValues) {
-                row.add(v.get(rrIdx));
+                // Current results has information about outcomes, but not about test parameters
+                Result currentResult = actualResult;
+
+                // Test Name
+                row.add(run.getPrimaryResult()
+                        .getLabel());
+
+                // Parameter Values
+                for (String pName : parameterNames) {
+                    String paramValue = run.getParams()
+                            .getParam(pName);
+                    row.add(paramValue);
+                }
+
+                // Run "mode" (single shot, throughput, ...)
+                row.add(run.getParams()
+                        .getMode()
+                        .shortLabel());
+
+                // Metric Name
+                String metricName;
+                if (currentResult.getRole()
+                        .equals(ResultRole.PRIMARY)) {
+                    metricName = run.getParams()
+                            .getMode()
+                            .longLabel();
+                } else {
+                    metricName = trimPunctuation(currentResult.getLabel());
+                }
+                row.add(metricName);
+
+                // Number of iterations used for measurement
+                row.add(String.valueOf(currentResult.getSampleCount()));
+
+                // Aggregation policy (sum, min, max, ...)
+                row.add(getPolicyOf(currentResult).toString());
+
+                // Value of the metric
+                row.add(String.valueOf(currentResult.getScore()));
+
+                // Margin of error
+                row.add(String.valueOf(doubleToString(currentResult.getScoreError())));
+
+                // Units of the metric
+                row.add(currentResult.getScoreUnit());
+
+                // Print the row
+                table.add(row);
             }
-
-            // Metric's label
-            //            if (resultIdx == primaryResultsIdx) {
-            //                row.add("PRIMARY");
-            //            } else {
-            row.add(trimPunctuation(result.getLabel()));
-            //            }
-
-            // Number of iterations used for measurement
-            row.add(String.valueOf(result.getSampleCount()));
-
-            // Aggregation policy (sum, min, max, ...)
-            row.add(((AggregationPolicy) getFieldContents(result, "policy")).toString());
-
-            // Value of the metric
-            row.add(String.valueOf(result.getScore()));
-
-            // Margin of error
-            row.add(String.valueOf(result.getScoreError()));
-
-            // Units of the metric
-            row.add(result.getScoreUnit());
-
-            // Print the row
-            table.add(row);
         }
 
         try {
             List<String> header = new ArrayList<>();
             header.add("Test");
             header.addAll(parameterNames);
+            header.add("Benchmark Mode");
             header.add("Metric");
-            header.add("Samples");
+            header.add("Sample Size");
             header.add("Statistic Type");
             header.add("Statistic Value");
-            header.add("Statistics Margin of Margin");
-            header.add("Unit");
+            header.add("Statistical Margin of Error");
+            header.add("Units");
 
             printer.printRecord(header);
             printer.printRecords(table);
@@ -179,6 +142,10 @@ public class NormalizedFormat implements ResultFormat {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private AggregationPolicy getPolicyOf(Result currentResult) {
+        return (AggregationPolicy) getFieldContents(currentResult, "policy");
     }
 
     Set<String> getParameterNames(Collection<RunResult> results) {
@@ -197,6 +164,12 @@ public class NormalizedFormat implements ResultFormat {
 
     }
 
+    // NaN messes up with I want to do with my spreadsheet.
+    // Use zero in place of NaN.
+    String doubleToString(Double value) {
+        return value.isNaN() ? "0" : String.valueOf(value);
+    }
+
     Object getFieldContents(Object object, String fieldName) {
         Class myClass = object.getClass();
         Field myField = null;
@@ -204,9 +177,7 @@ public class NormalizedFormat implements ResultFormat {
             myField = getField(myClass, fieldName);
             myField.setAccessible(true); //required if field is not normally accessible
             return myField.get(object);
-        } catch (NoSuchFieldException e) {
-            return null;
-        } catch (IllegalAccessException e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             return null;
         }
     }

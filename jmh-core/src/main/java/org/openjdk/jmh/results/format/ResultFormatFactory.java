@@ -83,7 +83,7 @@ public class ResultFormatFactory {
             return new JSONResultFormat(out);
         case LATEX:
             return new LaTeXResultFormat(out);
-        case NORM:
+        case NORMALIZED_CSV:
             return new NormalizedFormat(out);
         default:
             throw new IllegalStateException("Unsupported result format: " + type);
