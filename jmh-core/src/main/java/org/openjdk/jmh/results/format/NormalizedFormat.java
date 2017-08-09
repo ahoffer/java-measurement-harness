@@ -61,17 +61,13 @@ public class NormalizedFormat implements ResultFormat {
                 .map(x -> x.getSecondaryResults()
                         .keySet())
                 .flatMap(Set::stream)
-                .map(y -> Outcome.trimPunctuation(y))
+                .map(Outcome::trimPunctuation)
                 .collect(Collectors.toSet());
         Collection<String> parameterNames = null;
         for (RunResult run : results) {
 
-            // All metric names found
-            Set<String> allMetrrics = new HashSet<>();
-
             //Primary results
             Outcome outcome = Outcome.from(run, run.getPrimaryResult());
-            allMetrrics.add(outcome.getMetricName());
             table.add(outcome.asRow());
 
             // Any RunResult will provide the parameter names.
