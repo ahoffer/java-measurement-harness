@@ -54,6 +54,9 @@ public class NormalizedFormat implements ResultFormat {
 
     @Override
     public void writeOut(Collection<RunResult> results) {
+        if (results.isEmpty()) {
+            return;
+        }
 
         List<List<String>> table = new ArrayList<>();
 

@@ -67,8 +67,8 @@ public class NaiveHeapSizeProfiler implements InternalProfiler {
         executor.shutdownNow();
         Collection<Result> results = new ArrayList<>();
         for (Long l : heapSizes) {
-            results.add(new ScalarResult("Heap Avg", l, "B", AggregationPolicy.AVG));
-            results.add(new ScalarResult("Heap Max", l, "B", AggregationPolicy.MAX));
+            results.add(new ScalarResult("Heap-Avg", l, "B", AggregationPolicy.AVG));
+            results.add(new ScalarResult("Heap-Max", l, "B", AggregationPolicy.MAX));
         }
         return results;
     }
