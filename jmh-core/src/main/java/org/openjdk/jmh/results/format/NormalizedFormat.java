@@ -109,8 +109,9 @@ public class NormalizedFormat implements ResultFormat {
             printer.printRecord(header);
             printer.printRecords(table);
 
-            table.forEach(r -> System.err.println(r.stream()
-                    .collect(Collectors.joining(", "))));
+            // DEBUG PRINT
+            // table.forEach(r -> System.err.println(r.stream()
+            // .collect(Collectors.joining(", "))));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
