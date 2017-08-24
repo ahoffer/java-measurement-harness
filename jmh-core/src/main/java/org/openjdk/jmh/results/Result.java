@@ -39,8 +39,11 @@ import java.util.Collections;
  * Base class for all types of results that can be returned by a benchmark.
  */
 public abstract class Result<T extends Result<T>> implements Serializable {
+
     private static final long serialVersionUID = -7332879501317733312L;
     private static final Deduplicator<String> DEDUP = new Deduplicator<>();
+
+    public static final double CONFIDENCE = 0.95;
 
     protected final ResultRole role;
     protected final String label;
@@ -127,7 +130,7 @@ public abstract class Result<T extends Result<T>> implements Serializable {
     public double getScoreError() {
         switch (policy) {
             case AVG:
-                return statistics.getMeanErrorAt(0.999);
+                return statistics.getMeanErrorAt(CONFIDENCE);
             case SUM:
             case MIN:
             case MAX:
@@ -145,7 +148,7 @@ public abstract class Result<T extends Result<T>> implements Serializable {
     public double[] getScoreConfidence() {
         switch (policy) {
             case AVG:
-                return statistics.getConfidenceIntervalAt(0.999);
+                return statistics.getConfidenceIntervalAt(CONFIDENCE);
             case MAX:
             case MIN:
             case SUM:
@@ -271,7 +274,7 @@ public abstract class Result<T extends Result<T>> implements Serializable {
 
     private void printPercentiles(Statistics stats, StringBuilder sb) {
         sb.append("\n  Percentiles, ").append(getScoreUnit()).append(":\n");
-        for (double p : new double[]{0.00, 0.50, 0.90, 0.95, 0.99, 0.999, 0.9999, 0.99999, 0.999999, 1.0}) {
+        for (double p : new double[]{0.00, 0.50, 0.90, CONFIDENCE, 0.99, 0.999, 0.9999, 0.99999, 0.999999, 1.0}) {
             sb.append(String.format("    %11s = %s %s\n",
                     "p(" + String.format("%.4f", p * 100) + ")",
                     ScoreFormatter.format(10, stats.getPercentile(p * 100)),

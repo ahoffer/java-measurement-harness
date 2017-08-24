@@ -23,19 +23,15 @@ or visit www.oracle.com if you need additional information or have any
 questions.
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.openjdk.jmh</groupId>
-        <artifactId>jmh-parent</artifactId>
-        <version>1.21.0</version>
-    </parent>
-
     <name>JMH Generators: Annotation Processors</name>
+    <groupId>org.openjdk.jmh</groupId>
     <artifactId>jmh-generator-annprocess</artifactId>
+    <version>1.22.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <description>
@@ -88,7 +84,8 @@ questions.
                         </goals>
                         <phase>process-sources</phase>
                         <configuration>
-                            <header>file:///${project.basedir}/../src/license/gpl_cpe/header.txt</header>
+                            <header>file:///${project.basedir}/../src/license/gpl_cpe/header.txt
+                            </header>
                             <skipExistingHeaders>true</skipExistingHeaders>
                             <strictCheck>true</strictCheck>
                             <mapping>

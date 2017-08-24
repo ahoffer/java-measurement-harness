@@ -26,6 +26,7 @@ package org.openjdk.jmh.util;
 
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.stat.inference.TestUtils;
+import org.openjdk.jmh.results.Result;
 
 public abstract class AbstractStatistics implements Statistics {
     private static final long serialVersionUID = 1536835581997509117L;
@@ -61,7 +62,9 @@ public abstract class AbstractStatistics implements Statistics {
 
     @Override
     public double getMeanErrorAt(double confidence) {
-        if (getN() <= 2) return Double.NaN;
+        if (getN() <= 2) {
+            return Double.NaN;
+        }
         TDistribution tDist = new TDistribution(getN() - 1);
         double a = tDist.inverseCumulativeProbability(1 - (1 - confidence) / 2);
         return a * getStandardDeviation() / Math.sqrt(getN());
@@ -69,8 +72,7 @@ public abstract class AbstractStatistics implements Statistics {
 
     @Override
     public String toString() {
-        return "N:" + getN() + " Mean: " + getMean()
-                + " Min: " + getMin() + " Max: " + getMax()
+        return "N:" + getN() + " Mean: " + getMean() + " Min: " + getMin() + " Max: " + getMax()
                 + " StdDev: " + getStandardDeviation();
     }
 
@@ -101,6 +103,6 @@ public abstract class AbstractStatistics implements Statistics {
 
     @Override
     public int compareTo(Statistics other) {
-        return compareTo(other, 0.99);
+        return compareTo(other, Result.CONFIDENCE);
     }
 }
